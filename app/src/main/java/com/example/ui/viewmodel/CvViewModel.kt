@@ -73,6 +73,10 @@ class CvViewModel(application: Application) : AndroidViewModel(application) {
         _currentCv.value = _currentCv.value.copy(templateType = type)
     }
 
+    fun setWritingMethod(method: com.example.data.model.CvWritingMethod) {
+        _currentCv.value = _currentCv.value.copy(writingMethod = method)
+    }
+
     fun updateStyleConfig(style: CvStyleConfig) {
         _currentCv.value = _currentCv.value.copy(styleConfig = style)
     }

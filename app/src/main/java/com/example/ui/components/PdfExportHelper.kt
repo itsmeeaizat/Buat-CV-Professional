@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.example.data.model.CvProfile
 import com.example.data.model.CvTemplateType
+import com.example.data.model.CvWritingMethod
 import java.io.File
 import java.io.FileOutputStream
 
@@ -21,7 +22,7 @@ object PdfExportHelper {
     fun generateAndSavePdf(context: Context, cv: CvProfile): File? {
         val pdfDocument = PdfDocument()
         
-        // A4 page size at 72 DPI: 595 x 842 points
+        // Locked strictly to A4 page dimensions at 72 DPI (595 x 842 points / points)
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
         val page = pdfDocument.startPage(pageInfo)
         val canvas = page.canvas
@@ -38,7 +39,7 @@ object PdfExportHelper {
             pdfDocument.writeTo(outputStream)
             pdfDocument.close()
             outputStream.close()
-            Toast.makeText(context, "CV Berhasil Diunduh: ${file.name}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "CV Berhasil Diunduh (Format A4): ${file.name}", Toast.LENGTH_LONG).show()
             file
         } catch (e: Exception) {
             e.printStackTrace()
@@ -69,7 +70,13 @@ object PdfExportHelper {
     }
 
     private fun drawCvToCanvas(canvas: Canvas, cv: CvProfile) {
-        val width = 595
+        val width = 595f
+        val height = 842f
+        
+        // Strict Margin: 32pt on all sides
+        val margin = 32f
+        val contentWidth = width - (margin * 2)
+
         val primaryColorHex = try {
             Color.parseColor(cv.styleConfig.primaryColorHex)
         } catch (e: Exception) {
@@ -80,193 +87,293 @@ object PdfExportHelper {
             isAntiAlias = true
         }
 
-        // Background
+        // Clean white background
         canvas.drawColor(Color.WHITE)
 
-        var yPos = 40f
-        val margin = 40f
-        val contentWidth = width - (margin * 2)
+        var yPos = 42f
+
+        // Optional Method Tag Badge if XYZ or Gen Z
+        if (cv.writingMethod != CvWritingMethod.STANDARD) {
+            paint.color = if (cv.writingMethod == CvWritingMethod.XYZ) Color.parseColor("#10B981") else Color.parseColor("#EC4899")
+            paint.style = Paint.Style.FILL
+            canvas.drawRoundRect(width - margin - 110f, yPos - 12f, width - margin, yPos + 6f, 6f, 6f, paint)
+            
+            paint.color = Color.WHITE
+            paint.textSize = 7.5f
+            paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            val badgeLabel = if (cv.writingMethod == CvWritingMethod.XYZ) "GOOGLE XYZ FORMULA" else "GEN Z / TIKTOK STYLE"
+            canvas.drawText(badgeLabel, width - margin - 104f, yPos - 1f, paint)
+            paint.style = Paint.Style.FILL
+        }
 
         when (cv.templateType) {
             CvTemplateType.CREATIVE -> {
                 // Header Banner
                 paint.color = primaryColorHex
-                canvas.drawRect(0f, 0f, width.toFloat(), 130f, paint)
+                canvas.drawRect(0f, 0f, width, 125f, paint)
 
-                // Name in White
+                // Name (22sp bold)
                 paint.color = Color.WHITE
                 paint.textSize = 22f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                canvas.drawText(cv.personalInfo.fullName.ifBlank { "Nama Lengkap" }, margin, 55f, paint)
+                canvas.drawText(cv.personalInfo.fullName.ifBlank { "Nama Lengkap" }, margin, 48f, paint)
 
-                paint.textSize = 13f
+                // Job Title (12sp)
+                paint.textSize = 12f
                 paint.typeface = Typeface.DEFAULT
-                canvas.drawText(cv.personalInfo.jobTitle.ifBlank { "Posisi / Gelar" }, margin, 80f, paint)
+                canvas.drawText(cv.personalInfo.jobTitle.ifBlank { "Posisi / Gelar" }, margin, 68f, paint)
 
-                // Contact line below header
-                yPos = 155f
+                if (cv.styleConfig.headerTagline.isNotBlank()) {
+                    paint.textSize = 9.5f
+                    paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
+                    canvas.drawText(cv.styleConfig.headerTagline, margin, 85f, paint)
+                }
+
+                // Contact line
+                yPos = 145f
                 paint.color = Color.DKGRAY
-                paint.textSize = 10f
+                paint.textSize = 9.5f
+                paint.typeface = Typeface.DEFAULT
                 val contactStr = listOfNotNull(
                     cv.personalInfo.email.takeIf { it.isNotBlank() },
                     cv.personalInfo.phone.takeIf { it.isNotBlank() },
                     cv.personalInfo.address.takeIf { it.isNotBlank() },
                     cv.personalInfo.linkedin.takeIf { it.isNotBlank() }
-                ).joinToString(" • ")
+                ).joinToString("  •  ")
                 canvas.drawText(contactStr, margin, yPos, paint)
-                yPos += 25f
+                yPos += 20f
             }
             else -> {
-                // Professional & ATS Friendly Standard Header
+                // Standard Executive Header (Anti-bento clean design)
                 paint.color = primaryColorHex
-                paint.textSize = 24f
+                paint.textSize = 22f // Strict Name font scale 22sp
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 canvas.drawText(cv.personalInfo.fullName.ifBlank { "Nama Lengkap" }, margin, yPos, paint)
-                yPos += 22f
+                yPos += 20f
 
-                paint.color = Color.BLACK
-                paint.textSize = 13f
+                paint.color = Color.parseColor("#1E293B")
+                paint.textSize = 12f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 canvas.drawText(cv.personalInfo.jobTitle.ifBlank { "Posisi / Gelar Profesional" }, margin, yPos, paint)
-                yPos += 18f
+                yPos += 16f
+
+                if (cv.styleConfig.headerTagline.isNotBlank()) {
+                    paint.color = Color.DKGRAY
+                    paint.textSize = 9.5f
+                    paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
+                    canvas.drawText(cv.styleConfig.headerTagline, margin, yPos, paint)
+                    yPos += 14f
+                }
 
                 paint.color = Color.GRAY
-                paint.textSize = 10f
+                paint.textSize = 9f
                 paint.typeface = Typeface.DEFAULT
                 val contactLine = listOfNotNull(
                     cv.personalInfo.email.takeIf { it.isNotBlank() },
                     cv.personalInfo.phone.takeIf { it.isNotBlank() },
                     cv.personalInfo.address.takeIf { it.isNotBlank() },
                     cv.personalInfo.linkedin.takeIf { it.isNotBlank() }
-                ).joinToString(" | ")
+                ).joinToString("   |   ")
                 canvas.drawText(contactLine, margin, yPos, paint)
-                yPos += 15f
+                yPos += 14f
 
-                // Line separator
-                paint.color = primaryColorHex
-                paint.strokeWidth = 2f
-                canvas.drawLine(margin, yPos, width - margin, yPos, paint)
-                paint.strokeWidth = 0f
-                yPos += 20f
+                if (cv.styleConfig.showHeaderDivider) {
+                    paint.color = primaryColorHex
+                    paint.strokeWidth = 1.5f
+                    canvas.drawLine(margin, yPos, width - margin, yPos, paint)
+                    paint.strokeWidth = 0f
+                    yPos += 16f
+                } else {
+                    yPos += 10f
+                }
             }
         }
 
-        // Helper to draw section title
+        // Helper to draw section header (14sp scale, thin elegant line)
         fun drawSectionHeader(title: String) {
-            yPos += 10f
+            yPos += 8f
             paint.color = primaryColorHex
-            paint.textSize = 13f
+            paint.textSize = 14f // Sub-heading / Bagian scale
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             canvas.drawText(title.uppercase(), margin, yPos, paint)
             yPos += 5f
 
-            paint.color = Color.LTGRAY
+            paint.color = Color.parseColor("#CBD5E1") // Slate 300 thin hairline
             paint.strokeWidth = 1f
             canvas.drawLine(margin, yPos, width - margin, yPos, paint)
             paint.strokeWidth = 0f
-            yPos += 16f
+            yPos += 15f
         }
 
-        // Summary
-        if (cv.personalInfo.summary.isNotBlank()) {
-            drawSectionHeader("Ringkasan Profesional")
-            paint.color = Color.DKGRAY
-            paint.textSize = 10f
-            paint.typeface = Typeface.DEFAULT
-            val lines = cv.personalInfo.summary.chunked(85)
-            lines.forEach { line ->
-                canvas.drawText(line, margin, yPos, paint)
-                yPos += 14f
+        // Helper for Word-Wrapped Body Text (Line Height 13.5 - 14pt)
+        fun drawWrappedText(text: String, x: Float, maxWidth: Float, paint: Paint, lineHeight: Float = 14f) {
+            val words = text.split(" ")
+            var currentLine = StringBuilder()
+
+            for (word in words) {
+                val testLine = if (currentLine.isEmpty()) word else "$currentLine $word"
+                val measureWidth = paint.measureText(testLine)
+                if (measureWidth <= maxWidth) {
+                    currentLine.append(if (currentLine.isEmpty()) word else " $word")
+                } else {
+                    canvas.drawText(currentLine.toString(), x, yPos, paint)
+                    yPos += lineHeight
+                    currentLine = StringBuilder(word)
+                }
             }
-            yPos += 10f
+            if (currentLine.isNotEmpty()) {
+                canvas.drawText(currentLine.toString(), x, yPos, paint)
+                yPos += lineHeight
+            }
         }
 
-        // Work Experience
+        // 1. Summary Section
+        if (cv.personalInfo.summary.isNotBlank()) {
+            val summaryTitle = if (cv.writingMethod == CvWritingMethod.GEN_Z && cv.styleConfig.customSummaryTitle == "Ringkasan Profesional") {
+                "🔥 Pitch & Highlight Diri"
+            } else cv.styleConfig.customSummaryTitle
+
+            drawSectionHeader(summaryTitle)
+            paint.color = Color.parseColor("#334155")
+            paint.textSize = 10.5f // Body font scale 10.5sp
+            paint.typeface = Typeface.DEFAULT
+            drawWrappedText(cv.personalInfo.summary, margin, contentWidth, paint, lineHeight = 14f)
+            yPos += 8f
+        }
+
+        // 2. Work Experience Section
         if (cv.experiences.isNotEmpty()) {
-            drawSectionHeader("Pengalaman Kerja")
+            val expTitle = if (cv.writingMethod == CvWritingMethod.XYZ && cv.styleConfig.customExperienceTitle == "Pengalaman Kerja") {
+                "Pengalaman Kerja (Formula Google XYZ)"
+            } else cv.styleConfig.customExperienceTitle
+
+            drawSectionHeader(expTitle)
             cv.experiences.forEach { exp ->
                 paint.color = Color.BLACK
                 paint.textSize = 11f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 canvas.drawText("${exp.jobTitle} - ${exp.company}", margin, yPos, paint)
 
-                paint.color = Color.GRAY
+                paint.color = Color.parseColor("#64748B")
                 paint.textSize = 9f
                 paint.typeface = Typeface.DEFAULT
                 val dateStr = "${exp.startDate} - ${if (exp.isCurrentJob) "Sekarang" else exp.endDate}"
-                canvas.drawText(dateStr, width - margin - 110f, yPos, paint)
-                yPos += 15f
+                canvas.drawText(dateStr, width - margin - paint.measureText(dateStr), yPos, paint)
+                yPos += 14f
 
                 if (exp.description.isNotBlank()) {
-                    paint.color = Color.DKGRAY
-                    paint.textSize = 9.5f
+                    paint.color = Color.parseColor("#334155")
+                    paint.textSize = 10f
                     val bullets = exp.description.split("\n")
                     bullets.forEach { b ->
                         if (b.isNotBlank()) {
-                            val formattedB = if (b.trim().startsWith("-")) b.trim() else "• ${b.trim()}"
-                            val chunks = formattedB.chunked(85)
-                            chunks.forEach { c ->
-                                canvas.drawText(c, margin + 8f, yPos, paint)
-                                yPos += 13f
-                            }
+                            val bulletPrefix = if (cv.writingMethod == CvWritingMethod.GEN_Z && !b.trim().startsWith("•")) "✨ " else "• "
+                            val formattedB = if (b.trim().startsWith("•") || b.trim().startsWith("-") || b.trim().startsWith("✨")) b.trim() else "$bulletPrefix${b.trim()}"
+                            drawWrappedText(formattedB, margin + 8f, contentWidth - 8f, paint, lineHeight = 13.5f)
                         }
                     }
                 }
-                yPos += 8f
+                yPos += 6f
             }
         }
 
-        // Education
+        // 3. Education Section
         if (cv.educations.isNotEmpty()) {
-            drawSectionHeader("Pendidikan")
+            drawSectionHeader(cv.styleConfig.customEducationTitle)
             cv.educations.forEach { edu ->
                 paint.color = Color.BLACK
                 paint.textSize = 11f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 canvas.drawText("${edu.degree} - ${edu.institution}", margin, yPos, paint)
 
-                paint.color = Color.GRAY
+                paint.color = Color.parseColor("#64748B")
                 paint.textSize = 9f
                 paint.typeface = Typeface.DEFAULT
-                canvas.drawText("${edu.startDate} - ${edu.endDate}", width - margin - 110f, yPos, paint)
-                yPos += 15f
+                val dateStr = "${edu.startDate} - ${edu.endDate}"
+                canvas.drawText(dateStr, width - margin - paint.measureText(dateStr), yPos, paint)
+                yPos += 14f
 
                 if (edu.gpa.isNotBlank()) {
-                    paint.color = Color.DKGRAY
+                    paint.color = Color.parseColor("#475569")
                     paint.textSize = 9.5f
                     canvas.drawText("IPK / Nilai: ${edu.gpa}", margin + 8f, yPos, paint)
                     yPos += 13f
                 }
-                yPos += 5f
+                yPos += 4f
             }
         }
 
-        // Skills
+        // 4. Skills Section
         if (cv.skills.isNotEmpty()) {
-            drawSectionHeader("Keterampilan / Skills")
-            paint.color = Color.BLACK
+            drawSectionHeader(cv.styleConfig.customSkillsTitle)
+            paint.color = Color.parseColor("#1E293B")
             paint.textSize = 10f
             paint.typeface = Typeface.DEFAULT
-            val skillNames = cv.skills.joinToString("  •  ") { it.name }
-            val chunks = skillNames.chunked(80)
-            chunks.forEach { chunk ->
-                canvas.drawText(chunk, margin, yPos, paint)
-                yPos += 14f
-            }
-            yPos += 10f
+            val separator = if (cv.writingMethod == CvWritingMethod.GEN_Z) "   ⚡   " else "   •   "
+            val skillNames = cv.skills.joinToString(separator) { it.name }
+            drawWrappedText(skillNames, margin, contentWidth, paint, lineHeight = 14f)
+            yPos += 8f
         }
 
-        // Footer Text
-        if (cv.styleConfig.showFooter && cv.styleConfig.customFooterText.isNotBlank()) {
-            yPos = 800f
-            paint.color = Color.GRAY
-            paint.textSize = 8.5f
-            paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
-            val footerLines = cv.styleConfig.customFooterText.chunked(95)
-            footerLines.forEach { fLine ->
-                canvas.drawText(fLine, margin, yPos, paint)
-                yPos += 11f
+        // 5. Projects Section
+        if (cv.projects.isNotEmpty()) {
+            drawSectionHeader(cv.styleConfig.customProjectsTitle)
+            cv.projects.forEach { proj ->
+                paint.color = Color.BLACK
+                paint.textSize = 10.5f
+                paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                canvas.drawText(proj.title, margin, yPos, paint)
+
+                if (proj.role.isNotBlank()) {
+                    paint.color = Color.GRAY
+                    paint.textSize = 9f
+                    paint.typeface = Typeface.DEFAULT
+                    canvas.drawText(proj.role, width - margin - paint.measureText(proj.role), yPos, paint)
+                }
+                yPos += 14f
+
+                if (proj.description.isNotBlank()) {
+                    paint.color = Color.parseColor("#334155")
+                    paint.textSize = 9.5f
+                    drawWrappedText(proj.description, margin + 6f, contentWidth - 6f, paint, lineHeight = 13f)
+                }
+                yPos += 4f
+            }
+        }
+
+        // Footer Section (Fixed bottom at 790pt)
+        if (cv.styleConfig.showFooter) {
+            val footerY = 792f
+
+            paint.color = Color.parseColor("#E2E8F0")
+            paint.strokeWidth = 0.8f
+            canvas.drawLine(margin, footerY - 12f, width - margin, footerY - 12f, paint)
+            paint.strokeWidth = 0f
+
+            if (cv.styleConfig.footerLocationDate.isNotBlank()) {
+                paint.color = Color.parseColor("#475569")
+                paint.textSize = 8.5f
+                paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+                canvas.drawText(cv.styleConfig.footerLocationDate, margin, footerY, paint)
+            }
+
+            if (cv.styleConfig.customFooterText.isNotBlank()) {
+                paint.color = Color.GRAY
+                paint.textSize = 8f
+                paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.ITALIC)
+                var currentF = if (cv.styleConfig.footerLocationDate.isNotBlank()) footerY + 11f else footerY
+                canvas.drawText(cv.styleConfig.customFooterText.take(90), margin, currentF, paint)
+            }
+
+            if (cv.styleConfig.showPageNumbers) {
+                paint.color = Color.GRAY
+                paint.textSize = 8.5f
+                paint.typeface = Typeface.DEFAULT
+                val pageText = "Halaman 1 dari 1"
+                canvas.drawText(pageText, width - margin - paint.measureText(pageText), footerY, paint)
             }
         }
     }
+
+    private fun spToPt(sp: Float): Float = sp
 }

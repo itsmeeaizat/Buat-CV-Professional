@@ -3,7 +3,7 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/ic_cv_app_logo_1785509752957"
+        android:drawable="@drawable/ic_cv_app_logo_1785511730575"
         android:gravity="center" />
 </layer-list>
 

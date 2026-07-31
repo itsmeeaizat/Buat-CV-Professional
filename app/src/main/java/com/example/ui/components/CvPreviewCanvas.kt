@@ -94,7 +94,7 @@ fun CvPreviewCanvas(
             ) {
                 // Summary
                 if (cv.personalInfo.summary.isNotBlank()) {
-                    CvSectionTitle("Ringkasan Profesional", primaryColor, fontFamily)
+                    CvSectionTitle(cv.styleConfig.customSummaryTitle, primaryColor, fontFamily)
                     Text(
                         text = cv.personalInfo.summary,
                         style = MaterialTheme.typography.bodySmall.copy(
@@ -108,7 +108,7 @@ fun CvPreviewCanvas(
 
                 // Work Experience
                 if (cv.experiences.isNotEmpty()) {
-                    CvSectionTitle("Pengalaman Kerja", primaryColor, fontFamily)
+                    CvSectionTitle(cv.styleConfig.customExperienceTitle, primaryColor, fontFamily)
                     cv.experiences.forEach { exp ->
                         Column(modifier = Modifier.padding(bottom = 10.dp)) {
                             Row(
@@ -150,7 +150,7 @@ fun CvPreviewCanvas(
 
                 // Education
                 if (cv.educations.isNotEmpty()) {
-                    CvSectionTitle("Pendidikan", primaryColor, fontFamily)
+                    CvSectionTitle(cv.styleConfig.customEducationTitle, primaryColor, fontFamily)
                     cv.educations.forEach { edu ->
                         Row(
                             modifier = Modifier
@@ -185,7 +185,7 @@ fun CvPreviewCanvas(
 
                 // Skills
                 if (cv.skills.isNotEmpty()) {
-                    CvSectionTitle("Keterampilan", primaryColor, fontFamily)
+                    CvSectionTitle(cv.styleConfig.customSkillsTitle, primaryColor, fontFamily)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -211,20 +211,77 @@ fun CvPreviewCanvas(
                     }
                 }
 
+                // Projects
+                if (cv.projects.isNotEmpty()) {
+                    CvSectionTitle(cv.styleConfig.customProjectsTitle, primaryColor, fontFamily)
+                    cv.projects.forEach { proj ->
+                        Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                            Text(
+                                text = proj.title,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = fontFamily,
+                                    fontSize = (11.5f * cv.styleConfig.fontSizeScale).sp,
+                                    color = Color(0xFF0F172A)
+                                )
+                            )
+                            if (proj.description.isNotBlank()) {
+                                Text(
+                                    text = proj.description,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = (10 * cv.styleConfig.fontSizeScale).sp,
+                                        fontFamily = fontFamily,
+                                        color = Color(0xFF475569)
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // Custom Footer
-                if (cv.styleConfig.showFooter && cv.styleConfig.customFooterText.isNotBlank()) {
+                if (cv.styleConfig.showFooter) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Divider(color = Color.LightGray.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = cv.styleConfig.customFooterText,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = Color.Gray,
-                            fontSize = 9.sp,
-                            fontFamily = fontFamily
-                        ),
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (cv.styleConfig.footerLocationDate.isNotBlank()) {
+                            Text(
+                                text = cv.styleConfig.footerLocationDate,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color.DarkGray,
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    fontFamily = fontFamily
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                        }
+                        if (cv.styleConfig.customFooterText.isNotBlank()) {
+                            Text(
+                                text = cv.styleConfig.customFooterText,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color.Gray,
+                                    fontSize = 9.sp,
+                                    fontFamily = fontFamily
+                                )
+                            )
+                        }
+                        if (cv.styleConfig.showPageNumbers) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Halaman 1 dari 1",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color.LightGray,
+                                    fontSize = 8.5.sp
+                                ),
+                                modifier = Modifier.align(Alignment.End)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -271,6 +328,16 @@ private fun StandardHeader(cv: CvProfile, primaryColor: Color, fontFamily: FontF
                 fontFamily = fontFamily
             )
         )
+        if (cv.styleConfig.headerTagline.isNotBlank()) {
+            Text(
+                text = cv.styleConfig.headerTagline,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    color = Color(0xFF64748B),
+                    fontFamily = fontFamily
+                )
+            )
+        }
         Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),

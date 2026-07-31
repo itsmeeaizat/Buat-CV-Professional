@@ -3,6 +3,7 @@ package com.example.data.local
 import androidx.room.TypeConverter
 import com.example.data.model.CvStyleConfig
 import com.example.data.model.CvTemplateType
+import com.example.data.model.CvWritingMethod
 import com.example.data.model.Education
 import com.example.data.model.PersonalInfo
 import com.example.data.model.ProjectItem
@@ -23,6 +24,16 @@ class Converters {
         CvTemplateType.valueOf(value)
     } catch (e: Exception) {
         CvTemplateType.PROFESSIONAL
+    }
+
+    @TypeConverter
+    fun fromWritingMethod(value: CvWritingMethod): String = value.name
+
+    @TypeConverter
+    fun toWritingMethod(value: String): CvWritingMethod = try {
+        CvWritingMethod.valueOf(value)
+    } catch (e: Exception) {
+        CvWritingMethod.STANDARD
     }
 
     @TypeConverter

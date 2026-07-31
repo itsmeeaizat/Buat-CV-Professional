@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import com.example.data.model.CvProfile
 import com.example.data.model.SavedJob
 
-@Database(entities = [CvProfile::class, SavedJob::class], version = 1, exportSchema = false)
+@Database(entities = [CvProfile::class, SavedJob::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cvDao(): CvDao

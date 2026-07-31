@@ -63,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.CvTemplateType
+import com.example.data.model.CvWritingMethod
 import com.example.data.model.Education
 import com.example.data.model.PersonalInfo
 import com.example.data.model.SkillItem
@@ -186,9 +187,62 @@ private fun TemplateAndStyleTab(cvViewModel: CvViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.padding(vertical = 16.dp)
     ) {
+        // Section: Writing Method Selection
         item {
-            Text("Pilih Template CV", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-            Text("Template mempengaruhi tata letak, kerapian ATS, dan desain visual.", style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Sistem Pilihan Metode Penulisan CV", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
+                    }
+                    Text("Pilih gaya narasi untuk pengalaman & ringkasan profil Anda:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                    val methods = listOf(
+                        CvWritingMethod.STANDARD to ("Standar / Profesional" to "Format kronologis formal baku & rapi untuk corporate & BUMN."),
+                        CvWritingMethod.XYZ to ("Metode XYZ (Google Formula)" to "Formula [Accomplished X, measured by Y, by doing Z] untuk menonjolkan dampak kuantitatif."),
+                        CvWritingMethod.GEN_Z to ("Metode Ala Gen Z (TikTok Style)" to "Bahasa catchy, personal branding menonjol, punchline summary & soft skill kreatif.")
+                    )
+
+                    methods.forEach { (method, info) ->
+                        val isSelected = cv.writingMethod == method
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { cvViewModel.setWritingMethod(method) },
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = if (isSelected) 2.dp else 1.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            ),
+                            colors = CardDefaults.cardColors(containerColor = if (isSelected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(info.first, fontWeight = FontWeight.Bold, fontSize = 13.5.sp)
+                                    Text(info.second, fontSize = 11.5.sp, color = Color.Gray)
+                                }
+                                if (isSelected) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Text("Pilih Template Layout Document (A4)", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+            Text("Semua template dikunci presisi untuk kertas A4 standar dengan margin 30pt & anti-overflow.", style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray))
         }
 
         items(CvTemplateType.values()) { template ->
@@ -369,29 +423,71 @@ private fun PersonalInfoTab(cvViewModel: CvViewModel, aiViewModel: AiViewModel) 
         }
 
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Ringkasan / Bio Profesional", fontWeight = FontWeight.Bold)
-                Button(
-                    onClick = { showAiDialog = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Buat via AI", fontSize = 12.sp)
+                    Text(
+                        if (cv.writingMethod == CvWritingMethod.GEN_Z) "🔥 Personal Brand & Pitch (Gen Z Style)" else "Ringkasan / Bio Profesional",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Button(
+                        onClick = { showAiDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                    ) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Buat via AI", fontSize = 12.sp)
+                    }
+                }
+
+                if (cv.writingMethod == CvWritingMethod.GEN_Z) {
+                    Text("💡 Inspirasi Pitch Gen Z (Klik untuk gunakan):", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    val genZHooks = listOf(
+                        "Tech enthusiast & problem solver turning caffeine into scalable Android apps 🚀",
+                        "Obsessed with pixel-perfect UI & building experiences users actually love ✨",
+                        "Fast-learning builder focused on high-impact products, viral UX & clean code 💡"
+                    )
+                    genZHooks.forEach { hook ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { cvViewModel.updatePersonalInfo(info.copy(summary = hook)) }
+                                .padding(vertical = 2.dp)
+                        ) {
+                            Text(hook, fontSize = 11.sp, modifier = Modifier.padding(8.dp), color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                OutlinedTextField(
+                    value = info.summary,
+                    onValueChange = { cvViewModel.updatePersonalInfo(info.copy(summary = it)) },
+                    label = { Text("Ringkasan Pengalaman & Keahlian") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 4
+                )
+
+                // Character counter & 1-page A4 overflow control indicator
+                val charCount = info.summary.length
+                val isOptimal = charCount in 100..320
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        if (isOptimal) "✓ Panjang ideal untuk 1 Halaman A4" else if (charCount > 320) "⚠️ Terlalu panjang - Berpotensi meluap ke hal 2" else "Saran: 120-300 karakter untuk 1 Halaman A4 pas",
+                        fontSize = 11.sp,
+                        color = if (charCount > 320) Color(0xFFDC2626) else if (isOptimal) Color(0xFF16A34A) else Color.Gray
+                    )
+                    Text("$charCount karakter", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
                 }
             }
-
-            OutlinedTextField(
-                value = info.summary,
-                onValueChange = { cvViewModel.updatePersonalInfo(info.copy(summary = it)) },
-                label = { Text("Ringkasan Pengalaman & Keahlian") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 4
-            )
         }
     }
 
@@ -492,6 +588,12 @@ private fun ExperienceTab(cvViewModel: CvViewModel, aiViewModel: AiViewModel) {
         var endDate by remember { mutableStateOf("") }
         var description by remember { mutableStateOf("") }
 
+        // XYZ Formula Assistant States
+        var showXyzAssistant by remember { mutableStateOf(cv.writingMethod == CvWritingMethod.XYZ) }
+        var xAccomplished by remember { mutableStateOf("") }
+        var yMeasured by remember { mutableStateOf("") }
+        var zByDoing by remember { mutableStateOf("") }
+
         val aiLoading by aiViewModel.isLoading.collectAsState()
         val enhancedBullets by aiViewModel.enhancedBulletResult.collectAsState()
 
@@ -506,7 +608,7 @@ private fun ExperienceTab(cvViewModel: CvViewModel, aiViewModel: AiViewModel) {
             onDismissRequest = { showAddDialog = false },
             title = { Text("Tambah Pengalaman Kerja") },
             text = {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     item {
                         OutlinedTextField(
                             value = jobTitle,
@@ -539,13 +641,73 @@ private fun ExperienceTab(cvViewModel: CvViewModel, aiViewModel: AiViewModel) {
                             )
                         }
                     }
+
+                    // Interactive Google XYZ Formula Builder
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("🎯 Google XYZ Formula Builder", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = MaterialTheme.colorScheme.primary)
+                                    TextButton(onClick = { showXyzAssistant = !showXyzAssistant }) {
+                                        Text(if (showXyzAssistant) "Tutup" else "Buka Form XYZ", fontSize = 11.sp)
+                                    }
+                                }
+
+                                if (showXyzAssistant) {
+                                    Text("Pencapaian [X] + Metrik [Y] + Tindakan [Z]", fontSize = 11.sp, color = Color.Gray)
+                                    OutlinedTextField(
+                                        value = xAccomplished,
+                                        onValueChange = { xAccomplished = it },
+                                        label = { Text("[X] Hasil/Pencapaian (misal: tingkatkan omzet 30%)") },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    OutlinedTextField(
+                                        value = yMeasured,
+                                        onValueChange = { yMeasured = it },
+                                        label = { Text("[Y] Ukuran/Metrik (misal: diukur dari 50rb user)") },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    OutlinedTextField(
+                                        value = zByDoing,
+                                        onValueChange = { zByDoing = it },
+                                        label = { Text("[Z] Tindakan/Proses (misal: dengan optimasi query DB)") },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    Button(
+                                        onClick = {
+                                            if (xAccomplished.isNotBlank()) {
+                                                val builtBullet = "• Berhasil $xAccomplished, $yMeasured, melalui $zByDoing."
+                                                description = if (description.isBlank()) builtBullet else "$description\n$builtBullet"
+                                                xAccomplished = ""
+                                                yMeasured = ""
+                                                zByDoing = ""
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                                    ) {
+                                        Text("➕ Sisipkan Poin Formula XYZ", fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Deskripsi Tugas", fontSize = 12.sp)
+                            Text("Deskripsi Tugas / Bullet Points", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             TextButton(onClick = {
                                 if (description.isNotBlank()) {
                                     aiViewModel.enhanceBulletPoints(description, jobTitle)
@@ -559,10 +721,17 @@ private fun ExperienceTab(cvViewModel: CvViewModel, aiViewModel: AiViewModel) {
                         OutlinedTextField(
                             value = description,
                             onValueChange = { description = it },
-                            label = { Text("Poin pencapaian (misal: - Mengembangkan...)") },
+                            label = { Text("Poin pencapaian kerja Anda") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 3
                         )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Rekomendasi A4: max 3-4 poin ringkas", fontSize = 10.5.sp, color = Color.Gray)
+                            Text("${description.length} kar", fontSize = 10.5.sp, color = Color.Gray)
+                        }
                     }
                 }
             },
@@ -641,16 +810,41 @@ private fun EducationAndSkillsTab(cvViewModel: CvViewModel) {
 
         // Skills Section
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Keterampilan / Skills", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-                Button(onClick = { showSkillDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Tambah Skill")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        if (cv.writingMethod == CvWritingMethod.GEN_Z) "✨ Soft Skills & Hard Skills Kreatif" else "Keterampilan / Skills",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Button(onClick = { showSkillDialog = true }) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Tambah Skill")
+                    }
+                }
+
+                if (cv.writingMethod == CvWritingMethod.GEN_Z) {
+                    Text("💡 Rekomendasi Soft Skill Gen Z (Klik untuk tambah):", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                    val genZSkills = listOf("Creative Problem Solving 💡", "High Adaptability ⚡", "Fast Execution 🚀", "Storytelling & Pitching 🎙️", "Data-Driven Mindset 📊", "Trend Sensitivity 📈")
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(genZSkills) { sName ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
+                                modifier = Modifier.clickable {
+                                    if (cv.skills.none { it.name == sName }) {
+                                        cvViewModel.addSkill(SkillItem(name = sName, category = "Soft Skill"))
+                                    }
+                                }
+                            ) {
+                                Text(sName, fontSize = 11.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = MaterialTheme.colorScheme.onTertiaryContainer)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -748,6 +942,7 @@ private fun EducationAndSkillsTab(cvViewModel: CvViewModel) {
 
 @Composable
 private fun FooterAndOptionsTab(cvViewModel: CvViewModel) {
+    val context = LocalContext.current
     val cv by cvViewModel.currentCv.collectAsState()
     val style = cv.styleConfig
 
@@ -756,22 +951,115 @@ private fun FooterAndOptionsTab(cvViewModel: CvViewModel) {
         modifier = Modifier.padding(vertical = 16.dp)
     ) {
         item {
-            Text("Pengeditan Footer & Deklarasi", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-            Text("Kustomisasi pernyataan keabsahan atau catatan kaki dokumen CV Anda.", fontSize = 12.sp, color = Color.Gray)
+            Text("Pengeditan Header, Footer & Bagian CV", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+            Text("Personalisasi header, judul tiap bagian, serta teks deklarasi dan tanggal pada footer CV Anda.", fontSize = 12.sp, color = Color.Gray)
         }
 
+        // Section 1: Header Options
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Pengaturan Header CV", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
+
+                    OutlinedTextField(
+                        value = style.headerTagline,
+                        onValueChange = { cvViewModel.updateStyleConfig(style.copy(headerTagline = it)) },
+                        label = { Text("Sub-judul / Tagline Header (opsional)") },
+                        placeholder = { Text("misal: Senior Android Engineer | Open to Remote Work") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Tampilkan Footer di CV", fontWeight = FontWeight.Bold)
+                        Text("Tampilkan Garis Pemisah Header", fontSize = 14.sp)
+                        Switch(
+                            checked = style.showHeaderDivider,
+                            onCheckedChange = { cvViewModel.updateStyleConfig(style.copy(showHeaderDivider = it)) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Section 2: Custom Section Titles
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Judul Bagian / Seksi CV", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
+                    Text("Ubah label judul seksi agar sesuai bahasa dan kebutuhan lamaran Anda.", fontSize = 11.sp, color = Color.Gray)
+
+                    OutlinedTextField(
+                        value = style.customSummaryTitle,
+                        onValueChange = { cvViewModel.updateStyleConfig(style.copy(customSummaryTitle = it)) },
+                        label = { Text("Judul Ringkasan Profil") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = style.customExperienceTitle,
+                        onValueChange = { cvViewModel.updateStyleConfig(style.copy(customExperienceTitle = it)) },
+                        label = { Text("Judul Pengalaman Kerja") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = style.customEducationTitle,
+                        onValueChange = { cvViewModel.updateStyleConfig(style.copy(customEducationTitle = it)) },
+                        label = { Text("Judul Pendidikan") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = style.customSkillsTitle,
+                        onValueChange = { cvViewModel.updateStyleConfig(style.copy(customSkillsTitle = it)) },
+                        label = { Text("Judul Keterampilan / Skills") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = style.customProjectsTitle,
+                        onValueChange = { cvViewModel.updateStyleConfig(style.copy(customProjectsTitle = it)) },
+                        label = { Text("Judul Proyek / Portofolio") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                }
+            }
+        }
+
+        // Section 3: Footer Options
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Tampilkan Footer di CV", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary))
                         Switch(
                             checked = style.showFooter,
                             onCheckedChange = { cvViewModel.updateStyleConfig(style.copy(showFooter = it)) }
@@ -779,14 +1067,70 @@ private fun FooterAndOptionsTab(cvViewModel: CvViewModel) {
                     }
 
                     if (style.showFooter) {
-                        Spacer(modifier = Modifier.height(12.dp))
                         OutlinedTextField(
                             value = style.customFooterText,
                             onValueChange = { cvViewModel.updateStyleConfig(style.copy(customFooterText = it)) },
-                            label = { Text("Teks Pernyataan / Footer") },
+                            label = { Text("Teks Pernyataan / Deklarasi Keabsahan") },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2
                         )
+
+                        OutlinedTextField(
+                            value = style.footerLocationDate,
+                            onValueChange = { cvViewModel.updateStyleConfig(style.copy(footerLocationDate = it)) },
+                            label = { Text("Lokasi & Tanggal (opsional)") },
+                            placeholder = { Text("misal: Jakarta, 31 Juli 2026") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Tampilkan Nomor Halaman (Halaman 1 dari 1)", fontSize = 13.sp)
+                            Switch(
+                                checked = style.showPageNumbers,
+                                onCheckedChange = { cvViewModel.updateStyleConfig(style.copy(showPageNumbers = it)) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section 4: Direct Export Action
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Siap Mengunduh CV?", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("Unduh CV yang telah disesuaikan langsung dalam format PDF rapi siap kirim.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    Button(
+                        onClick = {
+                            val file = PdfExportHelper.generateAndSavePdf(context, cv)
+                            if (file != null) {
+                                Toast.makeText(context, "CV tersimpan di dokumen: ${file.name}", Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Unduh CV Format PDF sekarang", fontWeight = FontWeight.Bold)
                     }
                 }
             }
