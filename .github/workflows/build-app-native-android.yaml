@@ -40,8 +40,8 @@ jobs:
           -keyalg RSA -keysize 2048 -validity 10000 \
           -dname "CN=Aizat, O=Personal Developer, C=ID"
 
-      - name: Build Debug APK with Gradle
-        run: ./gradlew assembleDebug -x validateSigningDebug -Pkotlin.compiler.execution.strategy=in-process
+            - name: Build Debug APK with Gradle
+        run: ./gradlew assembleDebug -x validateSigningDebug -Pkotlin.compiler.execution.strategy=in-process -Pksp.incremental=false
 
       - name: Rename APK and Upload
         run: |
