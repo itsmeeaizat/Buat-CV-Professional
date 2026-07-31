@@ -50,5 +50,4 @@ jobs:
         with:
           name: ${{ github.event.repository.name }}-apk
           path: ${{ github.event.repository.name }}-debug.apk
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+    
