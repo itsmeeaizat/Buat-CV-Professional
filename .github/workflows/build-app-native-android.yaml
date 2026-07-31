@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '20'
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -32,16 +32,19 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Generate Custom Debug Keystore with My Name
+      - name: Generate Custom Debug Keystore and Copy to Project
         run: |
           mkdir -p ~/.android
           keytool -genkey -v -keystore ~/.android/debug.keystore \
           -storepass android -alias androiddebugkey -keypass android \
           -keyalg RSA -keysize 2048 -validity 10000 \
           -dname "CN=Aizat, O=Personal Developer, C=ID"
+          
+          # Salin file keystore langsung ke root directory project agar terbaca otomatis oleh Gradle
+          cp ~/.android/debug.keystore ./debug.keystore
 
       - name: Build Debug APK with Gradle
-        run: ./gradlew assembleDebug -Pandroid.injected.signing.store.file=/home/runner/.android/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.pass=android -Pkotlin.compiler.execution.strategy=in-process
+        run: ./gradlew assembleDebug -Pkotlin.compiler.execution.strategy=in-process
 
       - name: Rename APK and Upload
         run: |
