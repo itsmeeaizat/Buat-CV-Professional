@@ -41,7 +41,7 @@ jobs:
           -dname "CN=Aizat, O=Personal Developer, C=ID"
 
       - name: Build Debug APK with Gradle
-        run: ./gradlew assembleDebug -x validateSigningDebug -Pkotlin.compiler.execution.strategy=in-process
+        run: ./gradlew assembleDebug -Pandroid.injected.signing.store.file=/home/runner/.android/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.pass=android -Pkotlin.compiler.execution.strategy=in-process
 
       - name: Rename APK and Upload
         run: |
