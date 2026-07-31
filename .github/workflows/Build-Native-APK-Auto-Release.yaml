@@ -6,8 +6,8 @@ on:
       - main
       - master
     tags:
-      - 'v*' # Otomatis aktif jika kamu membuat tag versi (contoh: v1.0.0)
-  workflow_dispatch:
+      - 'v*'
+  workflow_dispatch: # Memungkinkan tombol "Run workflow" ditekan secara manual
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '20'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -68,17 +68,19 @@ jobs:
 
       - name: Release and Upload APK to GitHub Releases
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
           files: ${{ github.event.repository.name }}-Aizat-debug.apk
-          name: "Buat CV Professional ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name == 'refs/heads/main' && 'v1.0.0-build' || github.ref_name }}
+          name: "Buat CV Professional Build (${{ github.run_number }})"
           body: |
             ### 📱 Buat CV Professional (Android App)
             * **Developer:** Aizat
-            * **Status:** Release / Debug Build
+            * **Build Number:** ${{ github.run_number }}
+            * **Status:** Stable Release
             
             ### ✨ Catatan Versi:
-            - Pembaruan sistem build dan peningkatan performa aplikasi.
-            - Silakan unduh file APK di bawah untuk menginstalnya langsung di perangkat Android Anda.
+            - Berhasil di-build otomatis menggunakan GitHub Actions.
+            - Silakan unduh file APK di bawah ini untuk menginstalnya langsung di perangkat Android Anda.
           draft: false
           prerelease: false
