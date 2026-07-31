@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '20'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -40,8 +40,8 @@ jobs:
           -keyalg RSA -keysize 2048 -validity 10000 \
           -dname "CN=Aizat, O=Personal Developer, C=ID"
 
-            - name: Build Debug APK with Gradle
-        run: ./gradlew assembleDebug -x validateSigningDebug -Pkotlin.compiler.execution.strategy=in-process -Pksp.incremental=false
+      - name: Build Debug APK with Gradle
+        run: ./gradlew assembleDebug -x validateSigningDebug -Pkotlin.compiler.execution.strategy=in-process
 
       - name: Rename APK and Upload
         run: |
