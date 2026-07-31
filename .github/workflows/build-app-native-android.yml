@@ -32,8 +32,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug APK with Gradle (Bypass Keystore Error)
-        run: ./gradlew assembleDebug -x validateSigningDebug
+            - name: Build Debug APK with Gradle
+        run: ./gradlew assembleDebug -x validateSigningDebug -Pkotlin.compiler.execution.strategy=in-process
+
 
 
       - name: Rename APK and Upload
