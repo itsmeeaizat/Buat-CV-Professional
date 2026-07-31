@@ -1,0 +1,6 @@
+{
+  "name": "CV Maker AI & Job Finder",
+  "description": "Aplikasi Pembuat CV Kreatif, Profesional & ATS Friendly dengan Panduan AI, Pengeditan Template & Lowongan Kerja",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
